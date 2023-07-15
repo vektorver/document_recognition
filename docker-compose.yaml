@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    hostname: postgres
+    ports:
+      - 7000:5432
+      # - 1234:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mZXpS22X72
+      - DATABASE_URL=postgresql+asyncpg://postgres:mZXpS22X72@db:5432/postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data:delegated
+    restart: on-failure
+
+  backend:
+    build: .
+    command: uvicorn api.main:app --host 0.0.0.0
+    environment:
+      PORT: 8000
+    ports:
+      - '8000:8000'
+    restart: on-failure
+    volumes:
+      - ./upl:/uploads/
+
+  bot:
+    build: .
+    command: sh -c "python3 tgbot/tgbot.py"
+    container_name: tgb
+    restart: always
+    depends_on:
+      - db
+      - backend
+    volumes:
+      - ./upl:/uploads/
+
+
+volumes:
+  db-data:
